@@ -1,0 +1,88 @@
+{% extends 'network/layout.html' %}
+{% load static %}
+
+{% block body %}
+<div class="post-container">
+    <h1 class="mb-4">{{ user.username }}</h1>
+
+    <div class="mb-4">
+        {% if request.user.is_authenticated and user != request.user %}
+            {% if is_following %}
+            <form method="POST" action="{% url 'unfollow' user.username %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-lg">Unfollow</button>
+            </form>
+            {% else %}
+            <form method="POST" action="{% url 'follow' user.username %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary btn-lg">Follow</button>
+            </form>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6">
+          <div class="card text-center">
+              <div class="card-body p-3">
+                  <h5 class="card-title">Followers</h5>
+                  <p class="card-text h3 mb-0">{{ follower_count }}</p>
+              </div>
+          </div>
+      </div>
+      <div class="col-md-6">
+          <div class="card text-center">
+              <div class="card-body p-3">
+                  <h5 class="card-title">Following</h5>
+                  <p class="card-text h3 mb-0">{{ following_count }}</p>
+              </div>
+          </div>
+      </div>
+  </div>
+
+    {% for post in page_obj %}
+    <div class="card mb-3" id="post-{{ post.id }}">
+        <div class="card-body">
+          <h5 class="card-title"><a href="{% url 'profile' post.user.username %}" class="text-dark">{{ post.user.username }}</a></h5>
+            <div class="card-text content-text">{{ post.content }}</div>
+            {% if post.user == request.user %}
+                <button class="btn btn-link btn-sm edit-post-button" data-post-id="{{ post.id }}">Edit</button>
+                <textarea class="form-control edit-textarea" style="display:none;">{{ post.content }}</textarea>
+                <button class="btn btn-link btn-sm save-post-button" data-post-id="{{ post.id }}" style="display:none;">Save</button>
+            {% endif %}
+            <div class="text-muted mt-1 mb-1">{{ post.timestamp }}</div>
+            <div>
+                <button class="like-button" data-post-id="{{ post.id }}">
+                    <svg width="24px" height="24px" viewBox="0 0 24 24" fill="{% if request.user in post.likes.all %}#ff0000{% else %}#ffffff{% endif %}" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+                </button>
+                <span class="like-count">{{ post.likes.count }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/edit.js' %}"></script>
+    <script src="{% static 'network/like.js' %}"></script>
+{% endblock %}
